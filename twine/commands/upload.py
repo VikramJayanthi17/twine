@@ -60,6 +60,11 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     repository_url = cast(str, upload_settings.repository_config["repository"])
 
     print(f"Uploading distributions to {repository_url}")
+    if upload_settings.verbose:
+        for filename in uploads:
+            file_size = utils.get_file_size(filename)
+            print(f"  {filename} ({file_size})")
+        print("\n")
 
     repository = upload_settings.create_repository()
     uploaded_packages = []

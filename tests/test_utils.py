@@ -313,3 +313,19 @@ def test_check_status_code_for_missing_status_code(capsys, repo_url):
 
     captured = capsys.readouterr()
     assert captured.out == "NOTE: Try --verbose to see response content.\n"
+
+
+@pytest.mark.parametrize(
+    ("filename, expected"),
+    [
+        (helpers.WHEEL_FIXTURE, "15.4 KB"),
+        (helpers.SDIST_FIXTURE, "20.8 KB"),
+        (helpers.NEW_SDIST_FIXTURE, "26.1 KB"),
+        (helpers.NEW_WHEEL_FIXTURE, "21.9 KB"),
+    ],
+)
+def test_get_file_size(filename, expected):
+    """Compare the size of a file to the expected value."""
+    file_size = utils.get_file_size(filename)
+
+    assert file_size == expected
