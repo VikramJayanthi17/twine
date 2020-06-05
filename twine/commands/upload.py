@@ -109,6 +109,10 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
         print("\nView at:")
         for url in release_urls:
             print(url)
+    if upload_settings.verbose:
+        print("\List of packages that will be uploaded:")
+            for package in uploaded_packages:
+                print(package.filename)
 
     # Bug 28. Try to silence a ResourceWarning by clearing the connection
     # pool.
