@@ -103,6 +103,10 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
         utils.check_status_code(resp, upload_settings.verbose)
 
         uploaded_packages.append(package)
+    
+    #381
+    #uploaded_packages = the packages that are uploaded, needed for verbose output
+
 
     release_urls = repository.release_urls(uploaded_packages)
     if release_urls:

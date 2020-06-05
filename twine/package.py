@@ -47,7 +47,7 @@ DIST_EXTENSIONS = {
 
 MetadataValue = Union[str, Sequence[str]]
 
-
+#381 metadata of type pkginfo.Distribution is the actual package + data so that's the size we need to get to calc
 class PackageFile:
     def __init__(
         self,

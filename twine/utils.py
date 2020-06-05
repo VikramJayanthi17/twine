@@ -45,7 +45,7 @@ TEST_REPOSITORY = "https://test.pypi.org/legacy/"
 # get_userpass_value.
 RepositoryConfig = Dict[str, Optional[str]]
 
-
+#381 : Check which path the pyirc file is coming from and what the contents are
 def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # even if the config file does not exist, set up the parser
     # variable to reduce the number of if/else statements
@@ -189,6 +189,8 @@ def check_status_code(response: requests.Response, verbose: bool) -> None:
     except requests.HTTPError as err:
         if response.text:
             if verbose:
+                #381
+                print("Got this error from PyPI:")
                 print("Content received from server:\n{}".format(response.text))
             else:
                 print("NOTE: Try --verbose to see response content.")

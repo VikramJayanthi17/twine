@@ -137,8 +137,10 @@ class Repository:
         )
         # Bug 28. Try to silence a ResourceWarning by releasing the socket.
         resp.close()
-        return resp
-
+        return resp 
+    #381 need to get URL and HTTP methods for request and response from here and upload
+    #381 To calculate the size of each package uploaded we need to calculate the sizeof the data we send....
+    #381 the questions is do we just calc sizeof data, data_to_send or get it out of monitor some way(right now I think monitor.bytes_read after the upload)
     def _upload(self, package: package_file.PackageFile) -> requests.Response:
         data = package.metadata_dictionary()
         data.update(
