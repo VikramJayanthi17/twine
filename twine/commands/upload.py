@@ -53,17 +53,30 @@ def skip_upload(
 
 def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     dists = commands._find_dists(dists)
+    logging.addLevelName(1, "vvv")
+    logging.addLevelName(2, "vv")
+    logging.addLevelName(3, "v")
     upload_logger = logging.getLogger("UPLOAD_LOGGER")
-    #TODO: MAKE Verbose an int not a bool based off of params
-    upload_logger.setLevel(upload_settings.verbose)
+    #Hardcoded the "vvv", this is where we'd get the v's from settings which takes it from the user's cli
+    upload_logger.setLevel("vvv")
+    #TODO: MAKE Verbose an int or get the v's in string format to pass
+    verbosity_args_to_level_dict = {
+        "vvv" : 1,
+        "vv" : 2,
+        "v" : 3
+    }
+    
     # Determine if the user has passed in pre-signed distributions
     signatures = {os.path.basename(d): d for d in dists if d.endswith(".asc")}
     uploads = [i for i in dists if not i.endswith(".asc")]
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
-
+    upload_logger.warning("IN HERE FAM")
     print(f"Uploading distributions to {repository_url}")
-
+    for filename in uploads:
+        file_size = utils.get_file_size(filename)
+        upload_logger.log( 50 ,f"  {filename} ({file_size})")
+        print("hello")
     repository = upload_settings.create_repository()
     uploaded_packages = []
     for filename in uploads:
