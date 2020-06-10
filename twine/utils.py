@@ -160,7 +160,7 @@ def normalize_repository_url(url: str) -> str:
 
 
 def get_file_size(filename: str) -> str:
-    """Return the size of a file, in KB if < .1 MB."""
+    """Return the size of a file in KB, or MB if >= 1024 KB."""
     file_size = os.path.getsize(filename) / 1024
     size_unit = "KB"
 

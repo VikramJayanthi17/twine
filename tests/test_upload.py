@@ -73,7 +73,7 @@ def test_successs_prints_release_urls(upload_settings, stub_repository, capsys):
     assert captured.out.count(NEW_RELEASE_URL) == 1
 
 
-def test_successs_prints_uploaded_package_names_if_verbose(upload_settings, capsys):
+def test_print_packages_if_verbose(upload_settings, capsys):
     """Print the path and file size of each distribution attempting to be uploaded."""
     dists_to_upload = [
         helpers.WHEEL_FIXTURE,
@@ -82,7 +82,7 @@ def test_successs_prints_uploaded_package_names_if_verbose(upload_settings, caps
         helpers.NEW_WHEEL_FIXTURE,
     ]
 
-    sizes_of_dists_to_upload = [utils.get_file_size(dist) for dist in dists_to_upload]
+    expected_sizes_of_dists_to_upload = ["15.4 KB", "20.8 KB", "26.1 KB", "21.9 KB"]
 
     upload_settings.verbose = True
 
@@ -92,10 +92,14 @@ def test_successs_prints_uploaded_package_names_if_verbose(upload_settings, caps
 
     captured = capsys.readouterr()
 
-    for dist_to_upload in dists_to_upload:
-        assert captured.out.count(dist_to_upload) == 1
-    for size_of_dist_to_upload in sizes_of_dists_to_upload:
-        assert captured.out.count(size_of_dist_to_upload) == 1
+    for index in range(len(dists_to_upload)):
+        curr_dist = dists_to_upload[index]
+        size_of_curr_dist = utils.get_file_size(curr_dist)
+        expected_size_of_curr_dist = expected_sizes_of_dists_to_upload[index]
+
+        assert size_of_curr_dist == expected_size_of_curr_dist
+        assert captured.out.count(curr_dist) == 1
+        assert captured.out.count(size_of_curr_dist) == 1
 
 
 def test_success_with_pre_signed_distribution(upload_settings, stub_repository):

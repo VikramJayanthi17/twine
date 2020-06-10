@@ -316,16 +316,13 @@ def test_check_status_code_for_missing_status_code(capsys, repo_url):
 
 
 @pytest.mark.parametrize(
-    ("filename, expected"),
-    [
-        (helpers.WHEEL_FIXTURE, "15.4 KB"),
-        (helpers.SDIST_FIXTURE, "20.8 KB"),
-        (helpers.NEW_SDIST_FIXTURE, "26.1 KB"),
-        (helpers.NEW_WHEEL_FIXTURE, "21.9 KB"),
-    ],
+    ("num_bytes, expected"),
+    [(3704, "3.6 KB"), (1153433, "1.1 MB"), (21412841, "20.4 MB")],
 )
-def test_get_file_size(filename, expected):
-    """Compare the size of a file to the expected value."""
-    file_size = utils.get_file_size(filename)
+def test_get_file_size(num_bytes, expected, monkeypatch):
+    """Get the size of file as a string with units."""
+    monkeypatch.setattr(os.path, "getsize", lambda num_bytes: num_bytes)
+
+    file_size = utils.get_file_size(num_bytes)
 
     assert file_size == expected
