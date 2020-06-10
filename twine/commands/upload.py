@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
+import logging
 import os.path
 from typing import List
 from typing import cast
@@ -52,7 +53,9 @@ def skip_upload(
 
 def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     dists = commands._find_dists(dists)
-
+    upload_logger = logging.getLogger("UPLOAD_LOGGER")
+    #TODO: MAKE Verbose an int not a bool based off of params
+    upload_logger.setLevel(upload_settings.verbose)
     # Determine if the user has passed in pre-signed distributions
     signatures = {os.path.basename(d): d for d in dists if d.endswith(".asc")}
     uploads = [i for i in dists if not i.endswith(".asc")]
@@ -63,7 +66,6 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
 
     repository = upload_settings.create_repository()
     uploaded_packages = []
-
     for filename in uploads:
         package = package_file.PackageFile.from_filename(
             filename, upload_settings.comment
@@ -130,6 +132,6 @@ def main(args: List[str]) -> None:
 
     parsed_args = parser.parse_args(args)
     upload_settings = settings.Settings.from_argparse(parsed_args)
-
+    
     # Call the upload function with the arguments from the command line
     return upload(upload_settings, parsed_args.dists)
