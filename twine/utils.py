@@ -17,6 +17,7 @@ import configparser
 import functools
 import os
 import os.path
+import logging
 from typing import Any
 from typing import Callable
 from typing import DefaultDict
@@ -295,3 +296,9 @@ class EnvironmentFlag(argparse.Action):
         """Allow '0' and 'false' and 'no' to be False."""
         falsey = {"0", "false", "no"}
         return bool(val and val.lower() not in falsey)
+
+
+
+def setup_logging(verbosity : str) -> None:
+"""Set up the logger and logging based on the verbosity inputted by the user"""
+    

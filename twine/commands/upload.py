@@ -14,6 +14,7 @@
 import argparse
 import logging
 import os.path
+import sys
 from typing import List
 from typing import cast
 
@@ -57,25 +58,29 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     logging.addLevelName(2, "vv")
     logging.addLevelName(3, "v")
     upload_logger = logging.getLogger("UPLOAD_LOGGER")
-    #Hardcoded the "vvv", this is where we'd get the v's from settings which takes it from the user's cli
+    upload_handler = logging.StreamHandler(sys.stdout)
+    upload_handler.setLevel("vvv")
+    upload_logger.addHandler(upload_handler)
     upload_logger.setLevel("vvv")
+    #Hardcoded the "vvv", this is where we'd get the v's from settings which takes it from the user's cli
     #TODO: MAKE Verbose an int or get the v's in string format to pass
     verbosity_args_to_level_dict = {
         "vvv" : 1,
         "vv" : 2,
         "v" : 3
     }
-    
+    print(upload_logger.level)
+    print(upload_logger.getEffectiveLevel())
     # Determine if the user has passed in pre-signed distributions
     signatures = {os.path.basename(d): d for d in dists if d.endswith(".asc")}
     uploads = [i for i in dists if not i.endswith(".asc")]
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
-    upload_logger.warning("IN HERE FAM")
+
     print(f"Uploading distributions to {repository_url}")
     for filename in uploads:
         file_size = utils.get_file_size(filename)
-        upload_logger.log( 50 ,f"  {filename} ({file_size})")
+        upload_logger.log( 10 ,f"  {filename} ({file_size})")
         print("hello")
     repository = upload_settings.create_repository()
     uploaded_packages = []
