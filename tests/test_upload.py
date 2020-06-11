@@ -18,7 +18,6 @@ import requests
 from twine import cli
 from twine import exceptions
 from twine import package as package_file
-from twine import utils
 from twine.commands import upload
 
 from . import helpers
@@ -75,14 +74,12 @@ def test_successs_prints_release_urls(upload_settings, stub_repository, capsys):
 
 def test_print_packages_if_verbose(upload_settings, capsys):
     """Print the path and file size of each distribution attempting to be uploaded."""
-    dists_to_upload = [
-        helpers.WHEEL_FIXTURE,
-        helpers.SDIST_FIXTURE,
-        helpers.NEW_SDIST_FIXTURE,
-        helpers.NEW_WHEEL_FIXTURE,
-    ]
-
-    expected_sizes_of_dists_to_upload = ["15.4 KB", "20.8 KB", "26.1 KB", "21.9 KB"]
+    dists_to_upload = {
+        helpers.WHEEL_FIXTURE: "15.4 KB",
+        helpers.SDIST_FIXTURE: "20.8 KB",
+        helpers.NEW_SDIST_FIXTURE: "26.1 KB",
+        helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
+    }
 
     upload_settings.verbose = True
 
@@ -92,14 +89,8 @@ def test_print_packages_if_verbose(upload_settings, capsys):
 
     captured = capsys.readouterr()
 
-    for index in range(len(dists_to_upload)):
-        curr_dist = dists_to_upload[index]
-        size_of_curr_dist = utils.get_file_size(curr_dist)
-        expected_size_of_curr_dist = expected_sizes_of_dists_to_upload[index]
-
-        assert size_of_curr_dist == expected_size_of_curr_dist
-        assert captured.out.count(curr_dist) == 1
-        assert captured.out.count(size_of_curr_dist) == 1
+    for filename, size in dists_to_upload.items():
+        assert captured.out.count(f"{filename} ({size})") == 1
 
 
 def test_success_with_pre_signed_distribution(upload_settings, stub_repository):
