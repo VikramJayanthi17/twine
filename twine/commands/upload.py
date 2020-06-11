@@ -60,16 +60,12 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     uploads = [i for i in dists if not i.endswith(".asc")]
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
-    #Logging can be setup here for now as only upload uses verbosity
-    utils.setup_logging("vvv")
-    print("Upload Settings:")
-    #TODO : need to process verbose into a string or a int not a BOOL
-    print(upload_settings.verbose)
+    logger = logging.getLogger("LOGGER")
     print(f"Uploading distributions to {repository_url}")
     for filename in uploads:
         file_size = utils.get_file_size(filename)
-        # upload_logger.log( 10 ,f"  {filename} ({file_size})")
-        print("hello")
+        logger.log( utils.VERBOSE_STR_TO_INT["v"] ,f"  {filename} ({file_size})")
+        print("hello in loop")
     repository = upload_settings.create_repository()
     uploaded_packages = []
     for filename in uploads:
@@ -138,6 +134,6 @@ def main(args: List[str]) -> None:
 
     parsed_args = parser.parse_args(args)
     upload_settings = settings.Settings.from_argparse(parsed_args)
-    
+    utils.setup_logging(upload_settings.verbose)
     # Call the upload function with the arguments from the command line
     return upload(upload_settings, parsed_args.dists)

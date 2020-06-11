@@ -28,7 +28,6 @@ from typing import Sequence
 from typing import Union
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
-
 import requests
 import rfc3986
 
@@ -53,9 +52,8 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # variable to reduce the number of if/else statements
     parser = configparser.RawConfigParser()
     #Need to call this somewhere in the setup(some init) where we have the verbosity for real
-    setup_logging("vvv")
-    print("CONFIG")
-    upload_logger = logging.getLogger("UPLOAD_LOGGER")
+    
+    logger = logging.getLogger("LOGGER")
 
     # this list will only be used if index-servers
     # is not defined in the config file
@@ -67,7 +65,7 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # Expand user strings in the path
     path = os.path.expanduser(path)
     #Need to map the verbosity string to numbers somewhere early
-    upload_logger.log(3, path)
+    logger.log(VERBOSE_STR_TO_INT["vvv"], path)
     # Parse the rc file
     if os.path.isfile(path):
         parser.read(path)
@@ -101,7 +99,7 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
             if parser.has_option(repository, key):
                 config[repository][key] = parser.get(repository, key)
 
-    upload_logger.log(1, dict(config))
+    logger.log(VERBOSE_STR_TO_INT["vvv"], dict(config))
 
     # convert the defaultdict to a regular dict at this point
     # to prevent surprising behavior later on
@@ -306,15 +304,23 @@ class EnvironmentFlag(argparse.Action):
 
 
 
-def setup_logging(verbosity : str) -> None:
+VERBOSE_STR_TO_INT = {
+    "vvv" : 1,
+    "vv" : 2,
+    "v" : 3
+}
+
+def setup_logging(args_verbosity : int) -> None:
     """Set up the logger and logging based on the verbosity inputted by the user"""
     #Adding the various verbosity levels, 1 is more verbose than 3 
-    logging.addLevelName(1, "vvv")
-    logging.addLevelName(2, "vv")
-    logging.addLevelName(3, "v")
+    logging.addLevelName(VERBOSE_STR_TO_INT["vvv"], "vvv")
+    logging.addLevelName(VERBOSE_STR_TO_INT["vv"], "vv")
+    logging.addLevelName(VERBOSE_STR_TO_INT["v"], "v")
+    #Need to do this because we want -vvv to mean 1 not 3, etc cuz -vvv is the most verbose so it needs to be 1 not 3 because lower log levels are considered more verbose(print their level and all above)
+    verbosity = 4 - args_verbosity
     #Right now only the upload function needs a logger because its the only one that takes in --verbose
     #Creating a logger called "UPLOAD_LOGGER"
-    upload_logger = logging.getLogger("UPLOAD_LOGGER")
+    upload_logger = logging.getLogger("LOGGER")
     #Creating a handler for the logger, we use a handler instead of just using a config for the logger because we might want to expand this
     upload_handler = logging.StreamHandler(sys.stdout)
     #Setting up the verbosity for the handler and adding it to the logger

@@ -58,7 +58,7 @@ class Settings:
         client_cert: Optional[str] = None,
         repository_name: str = "pypi",
         repository_url: Optional[str] = None,
-        verbose: bool = False,
+        verbose: int = 0,
         disable_progress_bar: bool = False,
         **ignored_kwargs: Any,
     ) -> None:
@@ -122,6 +122,9 @@ class Settings:
         self.config_file = config_file
         self.comment = comment
         self.verbose = verbose
+        #Setup logging as soon as we have the CLI args because we need it to log the .pypirc file and the path in get_config which happens in _handle_repository_options()
+        utils.setup_logging(verbose)
+        print("VERBOSITY : " + str(verbose))
         self.disable_progress_bar = disable_progress_bar
         self.skip_existing = skip_existing
         self._handle_repository_options(
@@ -252,10 +255,11 @@ class Settings:
         )
         parser.add_argument(
             "--verbose",
-            default=False,
+            '-v',
             required=False,
-            action="store_true",
-            help="Show verbose output.",
+            action="count",
+            default=0,
+            help="Show verbose output. -v to -vvv in increasing verbosity.",
         )
         parser.add_argument(
             "--disable-progress-bar",
