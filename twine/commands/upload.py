@@ -54,33 +54,21 @@ def skip_upload(
 
 def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     dists = commands._find_dists(dists)
-    logging.addLevelName(1, "vvv")
-    logging.addLevelName(2, "vv")
-    logging.addLevelName(3, "v")
-    upload_logger = logging.getLogger("UPLOAD_LOGGER")
-    upload_handler = logging.StreamHandler(sys.stdout)
-    upload_handler.setLevel("vvv")
-    upload_logger.addHandler(upload_handler)
-    upload_logger.setLevel("vvv")
-    #Hardcoded the "vvv", this is where we'd get the v's from settings which takes it from the user's cli
-    #TODO: MAKE Verbose an int or get the v's in string format to pass
-    verbosity_args_to_level_dict = {
-        "vvv" : 1,
-        "vv" : 2,
-        "v" : 3
-    }
-    print(upload_logger.level)
-    print(upload_logger.getEffectiveLevel())
+    
     # Determine if the user has passed in pre-signed distributions
     signatures = {os.path.basename(d): d for d in dists if d.endswith(".asc")}
     uploads = [i for i in dists if not i.endswith(".asc")]
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
-
+    #Logging can be setup here for now as only upload uses verbosity
+    utils.setup_logging("vvv")
+    print("Upload Settings:")
+    #TODO : need to process verbose into a string or a int not a BOOL
+    print(upload_settings.verbose)
     print(f"Uploading distributions to {repository_url}")
     for filename in uploads:
         file_size = utils.get_file_size(filename)
-        upload_logger.log( 10 ,f"  {filename} ({file_size})")
+        # upload_logger.log( 10 ,f"  {filename} ({file_size})")
         print("hello")
     repository = upload_settings.create_repository()
     uploaded_packages = []

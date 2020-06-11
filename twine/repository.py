@@ -19,7 +19,7 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import cast
-
+import logging
 import requests
 import requests_toolbelt
 import tqdm
@@ -177,7 +177,8 @@ class Repository:
                     allow_redirects=False,
                     headers={"Content-Type": monitor.content_type},
                 )
-
+        upload_logger = logging.getLogger("UPLOAD_LOGGER")
+        upload_logger.log(3, resp)
         return resp
 
     def upload(

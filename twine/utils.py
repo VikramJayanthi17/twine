@@ -16,6 +16,7 @@ import collections
 import configparser
 import functools
 import os
+import sys
 import os.path
 import logging
 from typing import Any
@@ -51,6 +52,10 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # even if the config file does not exist, set up the parser
     # variable to reduce the number of if/else statements
     parser = configparser.RawConfigParser()
+    #Need to call this somewhere in the setup(some init) where we have the verbosity for real
+    setup_logging("vvv")
+    print("CONFIG")
+    upload_logger = logging.getLogger("UPLOAD_LOGGER")
 
     # this list will only be used if index-servers
     # is not defined in the config file
@@ -61,11 +66,11 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
 
     # Expand user strings in the path
     path = os.path.expanduser(path)
-
+    #Need to map the verbosity string to numbers somewhere early
+    upload_logger.log(3, path)
     # Parse the rc file
     if os.path.isfile(path):
         parser.read(path)
-
         # Get a list of index_servers from the config file
         # format: https://docs.python.org/3/distutils/packageindex.html#pypirc
         if parser.has_option("distutils", "index-servers"):
@@ -95,6 +100,8 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
         ]:
             if parser.has_option(repository, key):
                 config[repository][key] = parser.get(repository, key)
+
+    upload_logger.log(1, dict(config))
 
     # convert the defaultdict to a regular dict at this point
     # to prevent surprising behavior later on
@@ -300,5 +307,21 @@ class EnvironmentFlag(argparse.Action):
 
 
 def setup_logging(verbosity : str) -> None:
-"""Set up the logger and logging based on the verbosity inputted by the user"""
-    
+    """Set up the logger and logging based on the verbosity inputted by the user"""
+    #Adding the various verbosity levels, 1 is more verbose than 3 
+    logging.addLevelName(1, "vvv")
+    logging.addLevelName(2, "vv")
+    logging.addLevelName(3, "v")
+    #Right now only the upload function needs a logger because its the only one that takes in --verbose
+    #Creating a logger called "UPLOAD_LOGGER"
+    upload_logger = logging.getLogger("UPLOAD_LOGGER")
+    #Creating a handler for the logger, we use a handler instead of just using a config for the logger because we might want to expand this
+    upload_handler = logging.StreamHandler(sys.stdout)
+    #Setting up the verbosity for the handler and adding it to the logger
+    upload_handler.setLevel(verbosity)
+    upload_logger.addHandler(upload_handler)
+    #Setting a level of verbosity for the logger
+    upload_logger.setLevel(verbosity)
+
+
+
