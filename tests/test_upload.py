@@ -72,6 +72,27 @@ def test_successs_prints_release_urls(upload_settings, stub_repository, capsys):
     assert captured.out.count(NEW_RELEASE_URL) == 1
 
 
+def test_print_packages_if_verbose(upload_settings, capsys):
+    """Print the path and file size of each distribution attempting to be uploaded."""
+    dists_to_upload = {
+        helpers.WHEEL_FIXTURE: "15.4 KB",
+        helpers.SDIST_FIXTURE: "20.8 KB",
+        helpers.NEW_SDIST_FIXTURE: "26.1 KB",
+        helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
+    }
+
+    upload_settings.verbose = True
+
+    result = upload.upload(upload_settings, dists_to_upload)
+
+    assert result is None
+
+    captured = capsys.readouterr()
+
+    for filename, size in dists_to_upload.items():
+        assert captured.out.count(f"{filename} ({size})") == 1
+
+
 def test_success_with_pre_signed_distribution(upload_settings, stub_repository):
     """Adds GPG signature provided by user to uploaded package."""
     # Upload a pre-signed distribution

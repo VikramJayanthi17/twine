@@ -61,17 +61,42 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
     logger = logging.getLogger("LOGGER")
-    print(f"Uploading distributions to {repository_url}")
-    for filename in uploads:
-        file_size = utils.get_file_size(filename)
-        logger.log( utils.VERBOSE_STR_TO_INT["v"] ,f"  {filename} ({file_size})")
-        print("hello in loop")
-    repository = upload_settings.create_repository()
-    uploaded_packages = []
+    
+
+    packages_to_upload = []
+
     for filename in uploads:
         package = package_file.PackageFile.from_filename(
             filename, upload_settings.comment
         )
+
+        signed_name = package.signed_basefilename
+
+        if signed_name in signatures:
+            package.add_gpg_signature(signatures[signed_name], signed_name)
+        elif upload_settings.sign:
+            package.sign(upload_settings.sign_with, upload_settings.identity)
+
+        packages_to_upload.append(package)
+
+    file_package_zip = zip(uploads, packages_to_upload)
+
+    print(f"Uploading distributions to {repository_url}")
+    if upload_settings.verbose:
+        for filename, package in file_package_zip:
+            file_size = utils.get_file_size(filename)
+            print(f"  {filename} ({file_size})")
+            if upload_settings.sign:
+                print(f"  {package.signed_filename} (Signature)")
+            logger.log( utils.VERBOSE_STR_TO_INT["v"] ,f"  {filename} ({file_size})")
+
+
+        print("\n")
+
+    repository = upload_settings.create_repository()
+    uploaded_packages = []
+
+    for package in packages_to_upload:
         skip_message = "  Skipping {} because it appears to already exist".format(
             package.basefilename
         )
@@ -82,12 +107,6 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
         if upload_settings.skip_existing and repository.package_is_uploaded(package):
             print(skip_message)
             continue
-
-        signed_name = package.signed_basefilename
-        if signed_name in signatures:
-            package.add_gpg_signature(signatures[signed_name], signed_name)
-        elif upload_settings.sign:
-            package.sign(upload_settings.sign_with, upload_settings.identity)
 
         resp = repository.upload(package)
 
