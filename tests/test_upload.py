@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
+
 import pretend
 import pytest
 import requests
@@ -50,6 +52,51 @@ def upload_settings(make_settings, stub_repository):
     upload_settings = make_settings()
     upload_settings.create_repository = lambda: stub_repository
     return upload_settings
+
+
+@pytest.mark.parametrize(
+    ("filename, signatures"),
+    [
+        (
+            helpers.NEW_SDIST_FIXTURE,
+            {
+                os.path.basename(
+                    helpers.NEW_SDIST_FIXTURE + ".asc"
+                ): helpers.NEW_SDIST_FIXTURE
+                + ".asc"
+            },
+        )
+    ],
+)
+def test_make_package_pre_signed_dist(
+    filename, signatures, upload_settings, monkeypatch
+):
+    """Create a PackageFile instance from a filename, signatures and settings."""
+    upload_settings.sign = True
+
+    monkeypatch.setattr(
+        package_file.PackageFile, "add_gpg_signature", lambda *_: None,
+    )
+
+    package = upload._make_package(filename, signatures, upload_settings)
+
+    assert package.filename == filename
+    assert package.signed_filename == (filename + ".asc")
+
+
+@pytest.mark.parametrize(("filename, signatures"), [(helpers.NEW_WHEEL_FIXTURE, {})])
+def test_make_package_unsigned_dist(filename, signatures, upload_settings, monkeypatch):
+    """Create a PackageFile instance from a filename, no signatures and settings."""
+    upload_settings.sign = True
+
+    monkeypatch.setattr(
+        package_file.PackageFile, "sign", lambda *_: None,
+    )
+
+    package = upload._make_package(filename, signatures, upload_settings)
+
+    assert package.filename == filename
+    assert package.signed_filename == (filename + ".asc")
 
 
 def test_successs_prints_release_urls(upload_settings, stub_repository, capsys):
