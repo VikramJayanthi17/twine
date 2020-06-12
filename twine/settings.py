@@ -112,7 +112,7 @@ class Settings:
         :param str repository_url:
             The URL of the repository (package index) to interact with. This
             will override the settings inferred from ``repository_name``.
-        :param bool verbose:
+        :param int verbose:
             Show verbose output.
         :param bool disable_progress_bar:
             Disable the progress bar.
