@@ -13,6 +13,7 @@
 # limitations under the License.
 import argparse
 import os.path
+from typing import Dict
 from typing import List
 from typing import cast
 
@@ -50,6 +51,22 @@ def skip_upload(
     )
 
 
+def _make_package(
+    filename: str, signatures: Dict[str, str], upload_settings: settings.Settings
+) -> package_file.PackageFile:
+    """Create and sign a package, based off of filename, signatures and settings."""
+    package = package_file.PackageFile.from_filename(filename, upload_settings.comment)
+
+    signed_name = package.signed_basefilename
+
+    if signed_name in signatures:
+        package.add_gpg_signature(signatures[signed_name], signed_name)
+    elif upload_settings.sign:
+        package.sign(upload_settings.sign_with, upload_settings.identity)
+
+    return package
+
+
 def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     dists = commands._find_dists(dists)
 
@@ -58,31 +75,18 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     uploads = [i for i in dists if not i.endswith(".asc")]
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
-    packages_to_upload = []
 
-    for filename in uploads:
-        package = package_file.PackageFile.from_filename(
-            filename, upload_settings.comment
-        )
-
-        signed_name = package.signed_basefilename
-
-        if signed_name in signatures:
-            package.add_gpg_signature(signatures[signed_name], signed_name)
-        elif upload_settings.sign:
-            package.sign(upload_settings.sign_with, upload_settings.identity)
-
-        packages_to_upload.append(package)
-
-    file_package_zip = zip(uploads, packages_to_upload)
+    packages_to_upload = [
+        _make_package(filename, signatures, upload_settings) for filename in uploads
+    ]
 
     print(f"Uploading distributions to {repository_url}")
     if upload_settings.verbose:
-        for filename, package in file_package_zip:
-            file_size = utils.get_file_size(filename)
-            print(f"  {filename} ({file_size})")
-            print(f"  {package.signed_filename} (Signature)")
-
+        for package in packages_to_upload:
+            file_size = utils.get_file_size(package.filename)
+            print(f"  {package.filename} ({file_size})")
+            if upload_settings.sign or package.signed_filename in signatures:
+                print(f"  {package.signed_filename}")
         print("\n")
 
     repository = upload_settings.create_repository()
