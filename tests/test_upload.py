@@ -140,6 +140,43 @@ def test_print_packages_if_verbose(upload_settings, capsys):
         assert captured.out.count(f"{filename} ({size})") == 1
 
 
+@pytest.mark.parametrize(
+    ("dist", "expected_size", "dist_signature"),
+    [
+        (helpers.WHEEL_FIXTURE, "15.4 KB", helpers.WHEEL_FIXTURE + ".asc"),
+        (helpers.SDIST_FIXTURE, "20.8 KB", helpers.SDIST_FIXTURE + ".asc"),
+        (helpers.NEW_SDIST_FIXTURE, "26.1 KB", helpers.NEW_SDIST_FIXTURE + ".asc"),
+        (helpers.NEW_WHEEL_FIXTURE, "21.9 KB", helpers.NEW_WHEEL_FIXTURE + ".asc"),
+    ],
+)
+def test_print_signatures_if_verbose_with_signatures(
+    dist, expected_size, dist_signature, upload_settings, capsys, monkeypatch
+):
+    """Print path, file size, and signature of each dist attempting to be uploaded."""
+    # dists_to_upload = {
+    #     helpers.WHEEL_FIXTURE: "15.4 KB",
+    #     helpers.SDIST_FIXTURE: "20.8 KB",
+    #     helpers.NEW_SDIST_FIXTURE: "26.1 KB",
+    #     helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
+    # }
+
+    upload_settings.verbose = True
+    upload_settings.sign = True
+
+    monkeypatch.setattr(
+        package_file.PackageFile, "sign", lambda *_: None,
+    )
+
+    result = upload.upload(upload_settings, [dist])
+
+    assert result is None
+
+    captured = capsys.readouterr()
+
+    assert captured.out.count(f"{dist} ({expected_size})") == 1
+    assert captured.out.count(f"  {dist_signature}")
+
+
 def test_success_with_pre_signed_distribution(upload_settings, stub_repository):
     """Adds GPG signature provided by user to uploaded package."""
     # Upload a pre-signed distribution
