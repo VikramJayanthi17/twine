@@ -24,6 +24,7 @@ import requests
 import requests_toolbelt
 import tqdm
 import urllib3
+from twine import utils
 from requests import adapters
 from requests_toolbelt.utils import user_agent
 
@@ -177,8 +178,8 @@ class Repository:
                     allow_redirects=False,
                     headers={"Content-Type": monitor.content_type},
                 )
-        upload_logger = logging.getLogger("UPLOAD_LOGGER")
-        upload_logger.log(3, resp)
+        upload_logger = logging.getLogger("LOGGER")
+        upload_logger.log(utils.VERBOSE_STR_TO_INT["vvv"], f"Response from server for {package.basefilename} : {resp}")
         return resp
 
     def upload(

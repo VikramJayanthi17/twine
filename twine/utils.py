@@ -65,7 +65,7 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # Expand user strings in the path
     path = os.path.expanduser(path)
     #Need to map the verbosity string to numbers somewhere early
-    logger.log(VERBOSE_STR_TO_INT["vvv"], path)
+    logger.log(VERBOSE_STR_TO_INT["v"], f"Config path : {path}")
     # Parse the rc file
     if os.path.isfile(path):
         parser.read(path)
@@ -99,7 +99,7 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
             if parser.has_option(repository, key):
                 config[repository][key] = parser.get(repository, key)
 
-    logger.log(VERBOSE_STR_TO_INT["vvv"], dict(config))
+    logger.log(VERBOSE_STR_TO_INT["vvv"], "Config : {dict(config)}")
 
     # convert the defaultdict to a regular dict at this point
     # to prevent surprising behavior later on
