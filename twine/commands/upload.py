@@ -156,6 +156,6 @@ def main(args: List[str]) -> None:
 
     parsed_args = parser.parse_args(args)
     upload_settings = settings.Settings.from_argparse(parsed_args)
-    utils.setup_logging(upload_settings.verbose)
+    # utils.setup_logging(upload_settings.verbose)
     # Call the upload function with the arguments from the command line
     return upload(upload_settings, parsed_args.dists)

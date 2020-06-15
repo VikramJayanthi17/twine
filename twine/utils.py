@@ -18,6 +18,7 @@ import functools
 import os
 import sys
 import os.path
+import Enum from enum
 import logging
 from typing import Any
 from typing import Callable
@@ -99,10 +100,11 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
             if parser.has_option(repository, key):
                 config[repository][key] = parser.get(repository, key)
 
-    logger.log(VERBOSE_STR_TO_INT["vvv"], "Config : {dict(config)}")
-
     # convert the defaultdict to a regular dict at this point
     # to prevent surprising behavior later on
+    
+    logger.log(VERBOSE_STR_TO_INT["vvv"], f"Config : {dict(config)} \n")
+
     return dict(config)
 
 
@@ -176,13 +178,15 @@ def get_file_size(filename: str) -> str:
 
     return f"{file_size:.1f} {size_unit}"
 
-def check_status_code(response: requests.Response, verbose: bool) -> None:
+def check_status_code(response: requests.Response) -> None:
     """Generate a helpful message based on the response from the repository.
 
     Raise a custom exception for recognized errors. Otherwise, print the
     response content (based on the verbose option) before re-raising the
     HTTPError.
     """
+    #TODO : Get a logger to print this stuff.
+    logger = logging.getLogger("LOGGER")
     if response.status_code == 410 and "pypi.python.org" in response.url:
         raise exceptions.UploadToDeprecatedPyPIDetected(
             f"It appears you're uploading to pypi.python.org (or "
@@ -205,10 +209,10 @@ def check_status_code(response: requests.Response, verbose: bool) -> None:
         response.raise_for_status()
     except requests.HTTPError as err:
         if response.text:
-            if verbose:
-                print("Content received from server:\n{}".format(response.text))
-            else:
-                print("NOTE: Try --verbose to see response content.")
+            print("Content received from server:\n{}".format(response.text))
+            logger
+        else:
+            print("NOTE: Try --verbose to see response content.")
         raise err
 
 
@@ -303,30 +307,31 @@ class EnvironmentFlag(argparse.Action):
 
 
 
-VERBOSE_STR_TO_INT = {
-    "vvv" : 1,
-    "vv" : 2,
-    "v" : 3
+_MAX_VERBOSITY = 5
+
+_VERBOSITY_TO_LOG_LEVEL = {
+    1 : logging.INFO,
+    2 : logging.DEBUG,
+    3 : _MAX_VERBOSITY
 }
 
 def setup_logging(args_verbosity : int) -> None:
     """Set up the logger and logging based on the verbosity inputted by the user"""
-    #Adding the various verbosity levels, 1 is more verbose than 3 
-    logging.addLevelName(VERBOSE_STR_TO_INT["vvv"], "vvv")
-    logging.addLevelName(VERBOSE_STR_TO_INT["vv"], "vv")
-    logging.addLevelName(VERBOSE_STR_TO_INT["v"], "v")
+    #3 Vs are the maximum verbosity
+    if args_verbosity > 3:
+        args_verbosity = 3
     #Need to do this because we want -vvv to mean 1 not 3, etc cuz -vvv is the most verbose so it needs to be 1 not 3 because lower log levels are considered more verbose(print their level and all above)
-    verbosity = 4 - args_verbosity
+    log_level = _VERBOSITY_TO_LOG_LEVEL[args_verbosity]
     #Right now only the upload function needs a logger because its the only one that takes in --verbose
-    #Creating a logger called "UPLOAD_LOGGER"
-    upload_logger = logging.getLogger("LOGGER")
+    #Creating a logger called "LOGGER"
+    logger = logging.getLogger("LOGGER")
     #Creating a handler for the logger, we use a handler instead of just using a config for the logger because we might want to expand this
-    upload_handler = logging.StreamHandler(sys.stdout)
+    logger = logging.StreamHandler(sys.stdout)
     #Setting up the verbosity for the handler and adding it to the logger
-    upload_handler.setLevel(verbosity)
-    upload_logger.addHandler(upload_handler)
+    upload_handler.setLevel(log_level)
+    logger.addHandler(upload_handler)
     #Setting a level of verbosity for the logger
-    upload_logger.setLevel(verbosity)
+    logger.setLevel(verbosity)
 
 
 

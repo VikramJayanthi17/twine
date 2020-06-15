@@ -173,8 +173,8 @@ def test_print_signatures_if_verbose_with_signatures(
 
     captured = capsys.readouterr()
 
-    assert captured.out.count(f"  {dist} ({expected_size})") == 1
-    assert captured.out.count(f"  {dist_signature}")
+    assert captured.out.count(f"{dist} ({expected_size})") == 1
+    assert captured.out.count(f"  {dist_signature}") == 1
 
 
 def test_success_with_pre_signed_distribution(upload_settings, stub_repository):
