@@ -18,7 +18,6 @@ import functools
 import os
 import sys
 import os.path
-import Enum from enum
 import logging
 from typing import Any
 from typing import Callable
@@ -66,7 +65,8 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # Expand user strings in the path
     path = os.path.expanduser(path)
     #Need to map the verbosity string to numbers somewhere early
-    logger.log(VERBOSE_STR_TO_INT["v"], f"Config path : {path}")
+    # logger.log(VERBOSE_STR_TO_INT["v"], f"Config path : {path}")
+    logger.info(f"Config path : {path}")
     # Parse the rc file
     if os.path.isfile(path):
         parser.read(path)
@@ -103,7 +103,7 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # convert the defaultdict to a regular dict at this point
     # to prevent surprising behavior later on
     
-    logger.log(VERBOSE_STR_TO_INT["vvv"], f"Config : {dict(config)} \n")
+    logger.debug(f"Config : {dict(config)} \n")
 
     return dict(config)
 
@@ -185,7 +185,6 @@ def check_status_code(response: requests.Response) -> None:
     response content (based on the verbose option) before re-raising the
     HTTPError.
     """
-    #TODO : Get a logger to print this stuff.
     logger = logging.getLogger("LOGGER")
     if response.status_code == 410 and "pypi.python.org" in response.url:
         raise exceptions.UploadToDeprecatedPyPIDetected(
@@ -209,10 +208,9 @@ def check_status_code(response: requests.Response) -> None:
         response.raise_for_status()
     except requests.HTTPError as err:
         if response.text:
-            print("Content received from server:\n{}".format(response.text))
-            logger
+            logger.warning("Content received from server:\n{}".format(response.text))
         else:
-            print("NOTE: Try --verbose to see response content.")
+            logger.warning("NOTE: Try --verbose to see response content.")
         raise err
 
 
@@ -310,6 +308,7 @@ class EnvironmentFlag(argparse.Action):
 _MAX_VERBOSITY = 5
 
 _VERBOSITY_TO_LOG_LEVEL = {
+    0 : logging.WARNING,
     1 : logging.INFO,
     2 : logging.DEBUG,
     3 : _MAX_VERBOSITY
@@ -326,12 +325,12 @@ def setup_logging(args_verbosity : int) -> None:
     #Creating a logger called "LOGGER"
     logger = logging.getLogger("LOGGER")
     #Creating a handler for the logger, we use a handler instead of just using a config for the logger because we might want to expand this
-    logger = logging.StreamHandler(sys.stdout)
+    handler = logging.StreamHandler(sys.stdout)
     #Setting up the verbosity for the handler and adding it to the logger
-    upload_handler.setLevel(log_level)
-    logger.addHandler(upload_handler)
+    handler.setLevel(log_level)
+    logger.addHandler(handler)
     #Setting a level of verbosity for the logger
-    logger.setLevel(verbosity)
+    logger.setLevel(log_level)
 
 
 

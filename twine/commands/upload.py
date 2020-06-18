@@ -88,12 +88,9 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     if upload_settings.verbose:
         for package in packages_to_upload:
             file_size = utils.get_file_size(package.filename)
-            # print(f"  {package.filename} ({file_size})")
-            logger.log(utils.VERBOSE_STR_TO_INT["v"], f"  {package.filename} ({file_size})")
+            logger.info(f"  {package.filename} ({file_size})")
             if upload_settings.sign or package.signed_filename in signatures:
-                # print(f"  {package.signed_filename}")
-                logger.log(utils.VERBOSE_STR_TO_INT["v"], f"  {package.signed_filename}")
-
+                logger.info(f"  {package.signed_filename}")
         print("\n")
 
     repository = upload_settings.create_repository()
@@ -126,7 +123,7 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
             print(skip_message)
             continue
 
-        utils.check_status_code(resp, upload_settings.verbose)
+        utils.check_status_code(resp)
 
         uploaded_packages.append(package)
 
@@ -156,6 +153,5 @@ def main(args: List[str]) -> None:
 
     parsed_args = parser.parse_args(args)
     upload_settings = settings.Settings.from_argparse(parsed_args)
-    # utils.setup_logging(upload_settings.verbose)
     # Call the upload function with the arguments from the command line
     return upload(upload_settings, parsed_args.dists)

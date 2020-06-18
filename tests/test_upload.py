@@ -128,7 +128,7 @@ def test_print_packages_if_verbose(upload_settings, capsys):
         helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
     }
 
-    upload_settings.verbose = True
+    upload_settings.verbose = 3
 
     result = upload.upload(upload_settings, dists_to_upload)
 
@@ -160,7 +160,7 @@ def test_print_signatures_if_verbose_with_signatures(
     #     helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
     # }
 
-    upload_settings.verbose = True
+    upload_settings.verbose = 3
     upload_settings.sign = True
 
     monkeypatch.setattr(
@@ -221,7 +221,7 @@ def test_success_when_gpg_is_run(upload_settings, stub_repository, monkeypatch):
 
 @pytest.mark.parametrize("verbose", [False, True])
 def test_exception_for_http_status(verbose, upload_settings, stub_response, capsys):
-    upload_settings.verbose = verbose
+    upload_settings.verbose = 3
 
     stub_response.is_redirect = False
     stub_response.status_code = 403

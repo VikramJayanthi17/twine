@@ -178,12 +178,14 @@ class Repository:
                     allow_redirects=False,
                     headers={"Content-Type": monitor.content_type},
                 )
-        upload_logger = logging.getLogger("LOGGER")
-        upload_logger.log(utils.VERBOSE_STR_TO_INT["vvv"], f"Request to server for {package.basefilename} \n URL : {self.url} \n Headers: Content-Type={monitor.content_type} \n")
-        #Check_status_code called and we just raise earlier
-        # utils.check_status_code(resp)
-        #TODO : Need to figure out a way to not display this if the resp is an error as its already shown by HTTP_STATUS_CODE
-        upload_logger.log(utils.VERBOSE_STR_TO_INT["vvv"], f"Response from server for {package.basefilename} : {resp.content}")
+        
+        logger = logging.getLogger("LOGGER")
+        logger.log(utils._MAX_VERBOSITY, f"Request to server for {package.basefilename} \n URL : {self.url} \n Headers: Content-Type={monitor.content_type} \n")
+        #Check the status code, throw an error and output the server response if its bad        
+        utils.check_status_code(resp)
+
+        logger.log(utils._MAX_VERBOSITY, f"Headers recieved from the server for {package.basefilename}: \n{resp.headers}")
+        logger.log(utils._MAX_VERBOSITY, f"Content recieved from the server for {package.basefilename}: \n{resp.content}")
         return resp
 
     def upload(

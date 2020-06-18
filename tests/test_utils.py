@@ -286,7 +286,7 @@ def test_check_status_code_for_deprecated_pypi_url(repo_url):
 
     # value of Verbose doesn't matter for this check
     with pytest.raises(exceptions.UploadToDeprecatedPyPIDetected):
-        utils.check_status_code(response, False)
+        utils.check_status_code(response)
 
 
 @pytest.mark.parametrize(
@@ -302,14 +302,14 @@ def test_check_status_code_for_missing_status_code(capsys, repo_url):
     )
 
     with pytest.raises(requests.HTTPError):
-        utils.check_status_code(response, True)
+        utils.check_status_code(response)
 
     # Different messages are printed based on the verbose level
     captured = capsys.readouterr()
     assert captured.out == "Content received from server:\nForbidden\n"
 
     with pytest.raises(requests.HTTPError):
-        utils.check_status_code(response, False)
+        utils.check_status_code(response)
 
     captured = capsys.readouterr()
     assert captured.out == "NOTE: Try --verbose to see response content.\n"

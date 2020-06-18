@@ -58,7 +58,7 @@ class Settings:
         client_cert: Optional[str] = None,
         repository_name: str = "pypi",
         repository_url: Optional[str] = None,
-        verbosity: int = 0,
+        verbose: int = 0,
         disable_progress_bar: bool = False,
         **ignored_kwargs: Any,
     ) -> None:
@@ -121,8 +121,9 @@ class Settings:
         """
         self.config_file = config_file
         self.comment = comment
-        self.verbosity = verbosity
-        #Setup logging as soon as we have the CLI args because we need it to log the .pypirc file and the path in get_config which happens in _handle_repository_options()
+        self.verbose = verbose
+        #Setup logging as soon as we have the CLI args because we need it to log the .pypirc file 
+        # and the path in get_config which happens in _handle_repository_options()
         utils.setup_logging(verbose)
         self.disable_progress_bar = disable_progress_bar
         self.skip_existing = skip_existing
@@ -253,11 +254,11 @@ class Settings:
             " private key and the certificate in PEM format.",
         )
         parser.add_argument(
+            "-v",
             "--verbose",
-            '-v',
+            default=0,
             required=False,
             action="count",
-            default=0,
             help="Show verbose output. -v to -vvv in increasing verbosity.",
         )
         parser.add_argument(
