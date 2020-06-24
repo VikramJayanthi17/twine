@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import argparse
-import logging
 from typing import Any
 from typing import Optional
 from typing import cast
@@ -122,8 +121,7 @@ class Settings:
         self.config_file = config_file
         self.comment = comment
         self.verbose = verbose
-        #Setup logging as soon as we have the CLI args because we need it to log the .pypirc file 
-        # and the path in get_config which happens in _handle_repository_options()
+        # Setting up logging before the config is loaded
         utils.setup_logging(verbose)
         self.disable_progress_bar = disable_progress_bar
         self.skip_existing = skip_existing

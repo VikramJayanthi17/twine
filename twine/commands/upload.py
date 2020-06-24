@@ -14,7 +14,6 @@
 import argparse
 import logging
 import os.path
-import sys
 from typing import Dict
 from typing import List
 from typing import cast
@@ -71,14 +70,13 @@ def _make_package(
 
 def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     dists = commands._find_dists(dists)
-    
+
     # Determine if the user has passed in pre-signed distributions
     signatures = {os.path.basename(d): d for d in dists if d.endswith(".asc")}
     uploads = [i for i in dists if not i.endswith(".asc")]
     upload_settings.check_repository_url()
     repository_url = cast(str, upload_settings.repository_config["repository"])
     logger = logging.getLogger("LOGGER")
-    
 
     packages_to_upload = [
         _make_package(filename, signatures, upload_settings) for filename in uploads
@@ -123,7 +121,7 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
             print(skip_message)
             continue
 
-        utils.check_status_code(resp)
+        utils.check_status_code(resp, upload_settings.verbose)
 
         uploaded_packages.append(package)
 

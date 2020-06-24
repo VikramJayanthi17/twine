@@ -20,6 +20,7 @@ import requests
 from twine import cli
 from twine import exceptions
 from twine import package as package_file
+from twine import utils
 from twine.commands import upload
 
 from . import helpers
@@ -119,7 +120,7 @@ def test_successs_prints_release_urls(upload_settings, stub_repository, capsys):
     assert captured.out.count(NEW_RELEASE_URL) == 1
 
 
-def test_print_packages_if_verbose(upload_settings, capsys):
+def test_print_packages_if_verbose(upload_settings, caplog):
     """Print the path and file size of each distribution attempting to be uploaded."""
     dists_to_upload = {
         helpers.WHEEL_FIXTURE: "15.4 KB",
@@ -128,16 +129,19 @@ def test_print_packages_if_verbose(upload_settings, capsys):
         helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
     }
 
-    upload_settings.verbose = 3
+    upload_settings.verbose = 1
+    caplog.set_level(
+        utils._VERBOSITY_TO_LOG_LEVEL[upload_settings.verbose], logger="LOGGER"
+    )
 
     result = upload.upload(upload_settings, dists_to_upload)
 
     assert result is None
 
-    captured = capsys.readouterr()
+    captured = caplog.text
 
     for filename, size in dists_to_upload.items():
-        assert captured.out.count(f"{filename} ({size})") == 1
+        assert captured.count(f"{filename} ({size})") == 1
 
 
 @pytest.mark.parametrize(
@@ -150,17 +154,14 @@ def test_print_packages_if_verbose(upload_settings, capsys):
     ],
 )
 def test_print_signatures_if_verbose_with_signatures(
-    dist, expected_size, dist_signature, upload_settings, capsys, monkeypatch
+    dist, expected_size, dist_signature, upload_settings, caplog, monkeypatch
 ):
     """Print path, file size, and signature of each dist attempting to be uploaded."""
-    # dists_to_upload = {
-    #     helpers.WHEEL_FIXTURE: "15.4 KB",
-    #     helpers.SDIST_FIXTURE: "20.8 KB",
-    #     helpers.NEW_SDIST_FIXTURE: "26.1 KB",
-    #     helpers.NEW_WHEEL_FIXTURE: "21.9 KB",
-    # }
+    upload_settings.verbose = 1
+    caplog.set_level(
+        utils._VERBOSITY_TO_LOG_LEVEL[upload_settings.verbose], logger="LOGGER"
+    )
 
-    upload_settings.verbose = 3
     upload_settings.sign = True
 
     monkeypatch.setattr(
@@ -171,10 +172,10 @@ def test_print_signatures_if_verbose_with_signatures(
 
     assert result is None
 
-    captured = capsys.readouterr()
+    captured = caplog.text
 
-    assert captured.out.count(f"{dist} ({expected_size})") == 1
-    assert captured.out.count(f"  {dist_signature}") == 1
+    assert captured.count(f"{dist} ({expected_size})") == 1
+    assert captured.count(f"  {dist_signature}") == 1
 
 
 def test_success_with_pre_signed_distribution(upload_settings, stub_repository):
@@ -219,9 +220,12 @@ def test_success_when_gpg_is_run(upload_settings, stub_repository, monkeypatch):
     )
 
 
-@pytest.mark.parametrize("verbose", [False, True])
-def test_exception_for_http_status(verbose, upload_settings, stub_response, capsys):
-    upload_settings.verbose = 3
+@pytest.mark.parametrize("verbose", [0, 3])
+def test_exception_for_http_status(verbose, upload_settings, stub_response, caplog):
+    upload_settings.verbose = verbose
+    caplog.set_level(
+        utils._VERBOSITY_TO_LOG_LEVEL[upload_settings.verbose], logger="LOGGER"
+    )
 
     stub_response.is_redirect = False
     stub_response.status_code = 403
@@ -231,15 +235,15 @@ def test_exception_for_http_status(verbose, upload_settings, stub_response, caps
     with pytest.raises(requests.HTTPError):
         upload.upload(upload_settings, [helpers.WHEEL_FIXTURE])
 
-    captured = capsys.readouterr()
-    assert RELEASE_URL not in captured.out
+    captured = caplog.text
+    assert RELEASE_URL not in captured
 
     if verbose:
-        assert stub_response.text in captured.out
-        assert "--verbose" not in captured.out
+        assert stub_response.text in captured
+        assert "--verbose" not in captured
     else:
-        assert stub_response.text not in captured.out
-        assert "--verbose" in captured.out
+        assert stub_response.text not in captured
+        assert "--verbose" in captured
 
 
 def test_get_config_old_format(make_settings, pypirc):

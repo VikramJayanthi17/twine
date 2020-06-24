@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+import pprint
 import sys
 from typing import Any
 from typing import Dict
@@ -19,17 +21,17 @@ from typing import Optional
 from typing import Set
 from typing import Tuple
 from typing import cast
-import logging
+
 import requests
 import requests_toolbelt
 import tqdm
 import urllib3
-from twine import utils
 from requests import adapters
 from requests_toolbelt.utils import user_agent
 
 import twine
 from twine import package as package_file
+from twine import utils
 
 KEYWORDS_TO_NOT_FLATTEN = {"gpg_signature", "content"}
 
@@ -178,14 +180,28 @@ class Repository:
                     allow_redirects=False,
                     headers={"Content-Type": monitor.content_type},
                 )
-        
-        logger = logging.getLogger("LOGGER")
-        logger.log(utils._MAX_VERBOSITY, f"Request to server for {package.basefilename} \n URL : {self.url} \n Headers: Content-Type={monitor.content_type} \n")
-        #Check the status code, throw an error and output the server response if its bad        
-        utils.check_status_code(resp)
 
-        logger.log(utils._MAX_VERBOSITY, f"Headers recieved from the server for {package.basefilename}: \n{resp.headers}")
-        logger.log(utils._MAX_VERBOSITY, f"Content recieved from the server for {package.basefilename}: \n{resp.content}")
+        logger = logging.getLogger("LOGGER")
+        logger.log(
+            utils._MAX_VERBOSITY,
+            f"Request to server for {package.basefilename} \n URL"
+            + " : {self.url} \n Headers: Content-Type={monitor.content_type} \n",
+        )
+
+        if resp.headers is not None:
+            formatted_resp_headers = pprint.pformat(dict(resp.headers))
+            logger.log(
+                utils._MAX_VERBOSITY,
+                f"\nServer response headers for {package.basefilename}:"
+                + " \n{headers}".format(headers=formatted_resp_headers),
+            )
+        if resp.content is not None:
+            logger.log(
+                utils._MAX_VERBOSITY,
+                f"\nServer response content for {package.basefilename}:"
+                + " \n{content}\n".format(content=resp.content),
+            )
+
         return resp
 
     def upload(

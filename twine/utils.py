@@ -15,10 +15,10 @@ import argparse
 import collections
 import configparser
 import functools
-import os
-import sys
-import os.path
 import logging
+import os
+import os.path
+import sys
 from typing import Any
 from typing import Callable
 from typing import DefaultDict
@@ -28,6 +28,7 @@ from typing import Sequence
 from typing import Union
 from urllib.parse import urlparse
 from urllib.parse import urlunparse
+
 import requests
 import rfc3986
 
@@ -51,8 +52,7 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
     # even if the config file does not exist, set up the parser
     # variable to reduce the number of if/else statements
     parser = configparser.RawConfigParser()
-    #Need to call this somewhere in the setup(some init) where we have the verbosity for real
-    
+
     logger = logging.getLogger("LOGGER")
 
     # this list will only be used if index-servers
@@ -64,9 +64,9 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
 
     # Expand user strings in the path
     path = os.path.expanduser(path)
-    #Need to map the verbosity string to numbers somewhere early
+    # Need to map the verbosity string to numbers somewhere early
     # logger.log(VERBOSE_STR_TO_INT["v"], f"Config path : {path}")
-    logger.info(f"Config path : {path}")
+    logger.info(f"\nConfig path: {path}")
     # Parse the rc file
     if os.path.isfile(path):
         parser.read(path)
@@ -102,8 +102,8 @@ def get_config(path: str = "~/.pypirc") -> Dict[str, RepositoryConfig]:
 
     # convert the defaultdict to a regular dict at this point
     # to prevent surprising behavior later on
-    
-    logger.debug(f"Config : {dict(config)} \n")
+
+    logger.debug(f"\nConfig: {dict(config)} \n")
 
     return dict(config)
 
@@ -178,7 +178,8 @@ def get_file_size(filename: str) -> str:
 
     return f"{file_size:.1f} {size_unit}"
 
-def check_status_code(response: requests.Response) -> None:
+
+def check_status_code(response: requests.Response, verbose: int) -> None:
     """Generate a helpful message based on the response from the repository.
 
     Raise a custom exception for recognized errors. Otherwise, print the
@@ -208,9 +209,10 @@ def check_status_code(response: requests.Response) -> None:
         response.raise_for_status()
     except requests.HTTPError as err:
         if response.text:
-            logger.warning("Content received from server:\n{}".format(response.text))
-        else:
-            logger.warning("NOTE: Try --verbose to see response content.")
+            if verbose:
+                logger.info("Content received from server:\n{}".format(response.text))
+            else:
+                logger.warning("NOTE: Try --verbose to see response content.")
         raise err
 
 
@@ -304,33 +306,26 @@ class EnvironmentFlag(argparse.Action):
         return bool(val and val.lower() not in falsey)
 
 
-
 _MAX_VERBOSITY = 5
 
 _VERBOSITY_TO_LOG_LEVEL = {
-    0 : logging.WARNING,
-    1 : logging.INFO,
-    2 : logging.DEBUG,
-    3 : _MAX_VERBOSITY
+    0: logging.WARNING,
+    1: logging.INFO,
+    2: logging.DEBUG,
+    3: _MAX_VERBOSITY,
 }
 
-def setup_logging(args_verbosity : int) -> None:
-    """Set up the logger and logging based on the verbosity inputted by the user"""
-    #3 Vs are the maximum verbosity
+
+def setup_logging(args_verbosity: int) -> None:
+    """Set up the logger and logging based on the verbosity inputted by the user."""
+    # 3 Vs are the maximum verbosity
     if args_verbosity > 3:
         args_verbosity = 3
-    #Need to do this because we want -vvv to mean 1 not 3, etc cuz -vvv is the most verbose so it needs to be 1 not 3 because lower log levels are considered more verbose(print their level and all above)
+
     log_level = _VERBOSITY_TO_LOG_LEVEL[args_verbosity]
-    #Right now only the upload function needs a logger because its the only one that takes in --verbose
-    #Creating a logger called "LOGGER"
     logger = logging.getLogger("LOGGER")
-    #Creating a handler for the logger, we use a handler instead of just using a config for the logger because we might want to expand this
     handler = logging.StreamHandler(sys.stdout)
-    #Setting up the verbosity for the handler and adding it to the logger
     handler.setLevel(log_level)
     logger.addHandler(handler)
-    #Setting a level of verbosity for the logger
+    # Setting a level of verbosity for the logger
     logger.setLevel(log_level)
-
-
-
